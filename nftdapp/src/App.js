@@ -13,6 +13,9 @@ function App() {
   const web3ModalRef = useRef();
   const [inputURL, setInputURL] = useState("");
   const [tokensMinted, setTokensMinted] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [publicSaleStarted, setPublicSaleStarted] = useState(false);
+  const [userWhitelisted, setUserWhitelisted] = useState(false);
 
   const connectWallet = async()=>{
     try{
@@ -43,6 +46,58 @@ function App() {
     return web3Provider;
   }
 
+  const checkIfPublicSaleStarted = async()=>{
+    try {
+      const provider = await getProviderOrSigner(false);
+      const nftContract = new Contract(CONTRACT_ADDRESS, abi, provider);
+
+      const _publicSaleStarted = await nftContract.publicSaleStarted();
+      setPublicSaleStarted(_publicSaleStarted);
+      
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
+  const checkIfUserWhitelisted = async()=>{
+    try {
+      const provider = await getProviderOrSigner(false);
+      const nftContract = new Contract(CONTRACT_ADDRESS, abi, provider);
+      console.log("address: ", provider.getSigner().getAddress());
+
+      const _userWhitelisted = await nftContract.whitelistedAddresses(provider.getSigner().getAddress());
+      setUserWhitelisted(_userWhitelisted);
+      
+    } catch (error) {
+      console.log(error)
+      
+    }
+  }
+
+  const presaleMint = async()=>{
+    try {
+      console.log("We are minting")
+      const signer = await getProviderOrSigner(true);
+      //setInputURL(inputURL.value)
+      console.log("input URL:", inputURL)
+      
+
+      const nftContract = new Contract(CONTRACT_ADDRESS, abi, signer);
+      const tx = await nftContract.presaleMint(
+        "ipfs://QmSHNmiVg4b9yejnMYS1e4n5wsn1b3X8U2jqEKQeeaNGVq/0.json",
+        {value: utils.parseEther("0.02")}
+      )
+      setLoading(true)
+      await tx.wait();
+      setLoading(false)
+      window.alert("Successfully minted on presale")
+      numberOfTokensMinted();
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   const publicMint = async()=>{
     try {
       console.log("We are minting")
@@ -56,8 +111,12 @@ function App() {
         "ipfs://QmSHNmiVg4b9yejnMYS1e4n5wsn1b3X8U2jqEKQeeaNGVq/0.json",
         {value: utils.parseEther("0.02")}
       )
-      tx.wait();
+      setLoading(true)
+      await tx.wait();
+      setLoading(false)
       window.alert("Successfully minted")
+      numberOfTokensMinted();
+      
 
     } catch (error) {
       console.log(error);
@@ -86,21 +145,51 @@ function App() {
       });
       connectWallet();
       numberOfTokensMinted();
+      checkIfPublicSaleStarted();
+      checkIfUserWhitelisted();
+
     }
   }, [walletConnected])
 
   const renderButton = () =>{
-    if (!walletConnected){
+    if (!walletConnected && !loading){
       return (
         <button onClick={connectWallet} className="button">
           Connect Wallet
         </button>
       )
     }
-    else{
+    else if (loading){
+      return (
+        <button className="button">Loading...</button>
+      )
+    }
+    else if(!publicSaleStarted && !userWhitelisted){
+      
+      return (
+        <div className="desciption">
+          Unfortunately you are not in whitelist, wait for public sale 
+        </div>
+      )//TODO add timer;
+  
+    }
+    else if (!publicSaleStarted && userWhitelisted){
+      return (
+        <div>
+          <div className="desciption">
+            You are whitelisted! You can mint:
+          </div>
+
+          <button className="button" onClick={presaleMint}>
+            Presale Mint
+          </button>
+        </div>
+      );
+    }
+    else if (publicSaleStarted){
       return (
         <button className="button" onClick={publicMint}>
-          Mint
+          Public Mint
         </button>
       );
     }

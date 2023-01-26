@@ -1,6 +1,19 @@
-export const CONTRACT_ADDRESS = "0x1A5f7434B99B9B5ce12713252001Da37f0f5e49E"
+export const CONTRACT_ADDRESS = "0xD43986E47dEFC55897EB5ADdB2Dee7F61118f5ae"
 
 export const abi = [
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "arrayOfAddress",
+				"type": "address[]"
+			}
+		],
+		"name": "addAddressToWhitelist",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"inputs": [
 			{
@@ -118,6 +131,19 @@ export const abi = [
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "tokenURI_",
+				"type": "string"
+			}
+		],
+		"name": "presaleMint",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "renounceOwnership",
 		"outputs": [],
@@ -202,6 +228,13 @@ export const abi = [
 			}
 		],
 		"name": "setPrice",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "startPublicSale",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -413,6 +446,19 @@ export const abi = [
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "publicSaleStarted",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "bytes4",
@@ -471,6 +517,25 @@ export const abi = [
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "whitelistedAddresses",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
