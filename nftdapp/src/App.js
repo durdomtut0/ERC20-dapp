@@ -5,12 +5,14 @@ import React, {useEffect, useState, useRef} from "react"
 import Web3Modal from "web3modal"
 import {abi, CONTRACT_ADDRESS} from "./constants"
 
-//npm install ethers           OR web3
+//npm install ethers           OR web3 OR wagmi
 //npm install web3modal        OR rainbowkit, thirdweb
 
 function App() {
   const [walletConnected, setWalletConnected] = useState(false);
   const web3ModalRef = useRef();
+  const [inputURL, setInputURL] = useState("");
+  const [tokensMinted, setTokensMinted] = useState(0);
 
   const connectWallet = async()=>{
     try{
@@ -45,15 +47,31 @@ function App() {
     try {
       console.log("We are minting")
       const signer = await getProviderOrSigner(true);
+      //setInputURL(inputURL.value)
+      console.log("input URL:", inputURL)
+      
 
       const nftContract = new Contract(CONTRACT_ADDRESS, abi, signer);
       const tx = await nftContract.mint(
         "ipfs://QmSHNmiVg4b9yejnMYS1e4n5wsn1b3X8U2jqEKQeeaNGVq/0.json",
         {value: utils.parseEther("0.02")}
-        )
+      )
       tx.wait();
       window.alert("Successfully minted")
 
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const numberOfTokensMinted = async() =>{
+    try {
+      const provider = await getProviderOrSigner(false);
+      const nftContract = new Contract(CONTRACT_ADDRESS, abi, provider);
+      const tx = await nftContract.totalSupply();
+      //tx.wait();
+      console.log(tx);
+      setTokensMinted(Number(tx));
     } catch (error) {
       console.log(error);
     }
@@ -67,6 +85,7 @@ function App() {
         disableInjectedProvider: false,
       });
       connectWallet();
+      numberOfTokensMinted();
     }
   }, [walletConnected])
 
@@ -86,8 +105,9 @@ function App() {
       );
     }
   }
-
-
+  const handleURL = e => {
+    setInputURL(e.target.value)
+  }
 
   return (
     <div className = "main">
@@ -95,9 +115,19 @@ function App() {
       <div>
         <h1 className="title">Simple NFT React dapp</h1>
         <div className="description">
+            Provide URL of NFT
+        </div>
+        <input type="text" class = "inputText" onChange={handleURL} value={inputURL} placeholder="url" />
+
+        <div className="description">
             This is example collection
         </div>
         {renderButton()}
+        <br/>
+
+        <div className="description">
+            Numer of tokens minted {tokensMinted}/10.
+        </div>
       </div>
     </div>
 
