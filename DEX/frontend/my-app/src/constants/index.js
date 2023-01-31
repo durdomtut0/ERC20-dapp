@@ -417,6 +417,9 @@ export const EXCHANGE_CONTRACT_ABI = [
   ];
 
 
+
+
+//ABI ERC20  
 export const TOKEN_CONTRACT_ABI = [
 	{
 		"inputs": [
