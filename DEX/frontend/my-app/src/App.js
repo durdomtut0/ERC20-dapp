@@ -47,6 +47,15 @@ function App() {
   // amount of LP tokens that the user wants to remove from liquidity
   const [removeLPTokens, setRemoveLPTokens] = useState("0");
 
+  const [swapAmount, setSwapAmount] = useState("");
+  // This keeps track of the number of tokens that the user would receive after a swap completes
+  const [tokenToBeReceivedAfterSwap, settokenToBeReceivedAfterSwap] =
+    useState(zero);
+  // Keeps track of whether  `Eth` or `Crypto Dev` token is selected. If `Eth` is selected it means that the user
+  // wants to swap some `Eth` for some `Crypto Dev` tokens and vice versa if `Eth` is not selected
+  const [ethSelected, setEthSelected] = useState(true);
+
+
   const web3ModalRef = useRef();
   // walletConnected keep track of whether the user's wallet is connected or not
   const [walletConnected, setWalletConnected] = useState(false);
@@ -157,6 +166,59 @@ function App() {
         setRemoveEther(zero)
     }
   }
+  const _getAmountOfTokensReceivedFromSwap = async (_swapAmount) => {
+    try {
+      // Convert the amount entered by the user to a BigNumber using the `parseEther` library from `ethers.js`
+      const _swapAmountWEI = utils.parseEther(_swapAmount.toString());
+      // Check if the user entered zero
+      // We are here using the `eq` method from BigNumber class in `ethers.js`
+      if (!_swapAmountWEI.eq(zero)) {
+        const provider = await getProviderOrSigner();
+        // Get the amount of ether in the contract
+        const _ethBalance = await getEtherBalance(provider, null, true);
+        // Call the `getAmountOfTokensReceivedFromSwap` from the utils folder
+        const amountOfTokens = await getAmountOfTokensReceivedFromSwap(
+          _swapAmountWEI,
+          provider,
+          ethSelected,
+          _ethBalance,
+          reservedTokens
+        );
+        settokenToBeReceivedAfterSwap(amountOfTokens);
+      } else {
+        settokenToBeReceivedAfterSwap(zero);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  const _swapTokens = async () => {
+    try {
+      // Convert the amount entered by the user to a BigNumber using the `parseEther` library from `ethers.js`
+      const swapAmountWei = utils.parseEther(swapAmount);
+      // Check if the user entered zero
+      // We are here using the `eq` method from BigNumber class in `ethers.js`
+      if (!swapAmountWei.eq(zero)) {
+        const signer = await getProviderOrSigner(true);
+        setLoading(true);
+        // Call the swapTokens function from the `utils` folder
+        await swapTokens(
+          signer,
+          swapAmountWei,
+          tokenToBeReceivedAfterSwap,
+          ethSelected
+        );
+        setLoading(false);
+        // Get all the updated amounts after the swap
+        await getAmounts();
+        setSwapAmount("");
+      }
+    } catch (err) {
+      console.error(err);
+      setLoading(false);
+      setSwapAmount("");
+    }
+  };
 
   const getProviderOrSigner = async (needSigner = false) => {
     // Connect to Metamask
@@ -263,9 +325,9 @@ function App() {
             <div>
               <input type = "number" placeholder="Amount of LP Tokens"
                   onChange={async (e) => {
-                      console.log(e.target.value)
-                      setRemoveLPTokens(e.target.value || "0")
-                      console.log(utils.formatEther(removeLPTokens))
+                      //console.log(e.target.value)
+                      await setRemoveLPTokens(e.target.value || "0")
+                      //console.log(utils.formatEther(removeLPTokens))
                       await _getTokensAfterRemove(e.target.value || "0")
                   }}
                   className ="input"
@@ -283,6 +345,50 @@ function App() {
 
         </div>
       )
+    } else {
+      return (
+      <div>
+        <input
+          type="number"
+          placeholder="Amount"
+          onChange={async (e) => {
+            setSwapAmount(e.target.value || "");
+            // Calculate the amount of tokens user would receive after the swap
+            await _getAmountOfTokensReceivedFromSwap(e.target.value || "0");
+          }}
+          className="input"
+          value={swapAmount}
+        />
+        <select
+          className="select"
+          name="dropdown"
+          id="dropdown"
+          onChange={async () => {
+            setEthSelected(!ethSelected);
+            // Initialize the values back to zero
+            await _getAmountOfTokensReceivedFromSwap(0);
+            setSwapAmount("");
+          }}
+        >
+          <option value="eth">Ethereum</option>
+          <option value="cryptoDevToken">Crypto Dev Token</option>
+        </select>
+        <br />
+        <div className="inputDiv">
+          {/* Convert the BigNumber to string using the formatEther function from ethers.js */}
+          {ethSelected
+            ? `You will get ${utils.formatEther(
+                tokenToBeReceivedAfterSwap
+              )} Crypto Dev Tokens`
+            : `You will get ${utils.formatEther(
+                tokenToBeReceivedAfterSwap
+              )} Eth`}
+        </div>
+        <button className="button1" onClick={_swapTokens}>
+          Swap
+        </button>
+      </div>
+    );
     }
   }
 

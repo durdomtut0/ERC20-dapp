@@ -19,7 +19,7 @@ export const removeLiquidity = async (signer, removeLPTokensWei) => {
     provider,
     removeLPTokenWei,
     _ethBalance,
-    tokenReserve
+    cryptoDevTokenReserve
   ) => {
     try {
       // Create a new instance of the exchange contract
@@ -39,12 +39,12 @@ export const removeLiquidity = async (signer, removeLPTokensWei) => {
       // Ratio is -> (amount of CD tokens sent back to the user / CD Token reserve) = (LP tokens withdrawn) / (total supply of LP tokens)
       // Then (amount of CD tokens sent back to the user) = (CD token reserve * LP tokens withdrawn) / (total supply of LP tokens)
       const _removeEther = _ethBalance.mul(removeLPTokenWei).div(_totalSupply);
-      const _removeToken = tokenReserve
+      const _removeCD = cryptoDevTokenReserve
         .mul(removeLPTokenWei)
         .div(_totalSupply);
       return {
         _removeEther,
-        _removeToken,
+        _removeCD,
       };
     } catch (err) {
       console.error(err);
