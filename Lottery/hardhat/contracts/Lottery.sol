@@ -9,7 +9,8 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     //Game states
     bool public gameStarted;
     uint256 entryFee = 0.01 ether;
-    uint256 public gameId;
+    uint256 gameId;
+    mapping (uint256 => address) playersAddress;
     uint256 public gameStartedTimestamp;
     event GameStarted(
         uint256 gameId,
@@ -18,6 +19,8 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     );
     event GameEnded(
         uint256 gameId,
+        address playerAddress,
+        uint256 requestId,
         uint256 slot1,
         uint256 slot2,
         uint256 slot3,
@@ -27,20 +30,19 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     //Chainlink states
     uint64 s_subscriptionId;
     VRFCoordinatorV2Interface COORDINATOR;
-    bytes32 keyHash =
-        0xd4bb89654db74673a187bd804519e65e3f71a52bc55f11da7601a13dcf505314;
+    bytes32 keyHash = 0x4b09e658ed251bcafeebbc69400383d49f344ace09b9576fe248bb02c003fe9f;
     uint32 callbackGasLimit = 100000;
     uint16 requestConfirmations = 3;
     uint32 numWords = 3; //3 numbers
 
-    constructor(
+    constructor (
         uint64 subscriptionId
-    )
-        VRFConsumerBaseV2(0x6A2AAd07396B36Fe02a22b33cf443582f682c82f)
+    ) payable
+        VRFConsumerBaseV2(0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed)
         ConfirmedOwner(msg.sender)
     {
         COORDINATOR = VRFCoordinatorV2Interface(
-            0x6A2AAd07396B36Fe02a22b33cf443582f682c82f
+            0x7a1BaC17Ccc5b313516C5E16fb24f7659aA5ebed
         );
         s_subscriptionId = subscriptionId;
         gameStarted = false;
@@ -49,6 +51,7 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     function startGame() public payable {
         require(msg.value == entryFee, "supply the entry fee");
         gameId += 1;
+        playersAddress[gameId] = msg.sender;
         requestRandomWords();
         emit GameStarted(gameId, msg.sender, block.timestamp);
     }
@@ -69,12 +72,29 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
         uint256[] memory randomWords
     ) internal virtual override {
         //TODO I will pick winners
+        uint256 slot1 = randomWords[0]%3+1;
+        uint256 slot2 = randomWords[1]%3+1;
+        uint256 slot3 = randomWords[2]%3+1;
+        bool isWinner = (slot1 == slot2 || slot2 == slot3  || slot1 == slot3) ? true : false;
         emit GameEnded(
             gameId,
-            randomWords[0],
-            randomWords[1],
-            randomWords[2],
-            (randomWords[0]+randomWords[1]+randomWords[2]>50) ? true : false
+            playersAddress[gameId],
+            requestId,
+            slot1,
+            slot2,
+            slot3,
+            isWinner
         );
+        if (isWinner){
+            (bool success, ) = playersAddress[gameId].call{value: entryFee*2}("");
+            require(success, "Failed to send Ether");
+        }
+    }
+    function withdraw() public onlyOwner{
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+            require(success, "Failed to send Ether");
     }
 }
+
+//graph init --contract-name Lottery --product hosted-service durdomtut0/Lottery  --from-contract 0xF7C8D667B09B946852bA46cd4B7b9dA0CcE3798C  --abi ./abi.json --network mumbai graph
+
