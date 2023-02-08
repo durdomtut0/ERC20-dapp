@@ -14,7 +14,7 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     uint256 public gameStartedTimestamp;
     event GameStarted(
         uint256 gameId,
-        address player,
+        address playerAdress,
         uint256 gameStartedTimestamp
     );
     event GameEnded(
@@ -96,5 +96,5 @@ contract Lottery is VRFConsumerBaseV2, ConfirmedOwner {
     }
 }
 
-//graph init --contract-name Lottery --product hosted-service durdomtut0/Lottery  --from-contract 0xF7C8D667B09B946852bA46cd4B7b9dA0CcE3798C  --abi ./abi.json --network mumbai graph
+//graph init --contract-name Lottery --product hosted-service durdomtut0/lottery2  --from-contract 0xaDE525ceb51a5F11e8E3BeDDb4FD5Eb273D17047  --abi ./abi.json --network mumbai graph
 

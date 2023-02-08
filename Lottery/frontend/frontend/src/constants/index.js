@@ -1,4 +1,4 @@
-[
+export const abi = [
     {
       "inputs": [
         {
@@ -230,3 +230,6 @@
       "type": "function"
     }
 ]
+;
+export const RANDOM_GAME_NFT_CONTRACT_ADDRESS =
+0xaDE525ceb51a5F11e8E3BeDDb4FD5Eb273D17047;
